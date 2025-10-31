@@ -1,0 +1,5 @@
+{
+  "name": "sevenoc - Music Streaming Platform",
+  "description": "A professional, fully functional music streaming platform inspired by SoundCloud. It allows users to register, upload, and listen to music, with features like light/dark mode, bilingual support (English/Arabic), and a persistent audio player. The backend is powered by Supabase for authentication, storage, and database management.",
+  "requestFramePermissions": []
+}
