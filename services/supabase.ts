@@ -5,8 +5,8 @@ import { Track, User } from '../types';
 import { getAudioDuration } from '../utils/helpers';
 
 // Fix: Hardcoded Supabase credentials to resolve the critical connection error.
-const supabaseUrl = 'https://zrrkmeihfgequepvnkmu.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpycmttZWloZmdlcXVlcHZua211Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5MTY2ODYsImV4cCI6MjA3NzQ5MjY4Nn0.o8maoNu5hElFwWyS40--3Rb_j4jUx08HwoDuaeOq4V0';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error("Supabase URL or Anon Key is not defined.");
