@@ -30,30 +30,8 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [volume, setVolume] = useState(1);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playNextRef = useRef<() => void>(() => {});
 
-  useEffect(() => {
-    audioRef.current = new Audio();
-    audioRef.current.volume = volume;
-
-    const audio = audioRef.current;
-    
-    const handleTimeUpdate = () => setProgress(audio.currentTime);
-    const handleDurationChange = () => setDuration(audio.duration);
-    const handleEnded = () => playNext();
-
-    audio.addEventListener('timeupdate', handleTimeUpdate);
-    audio.addEventListener('durationchange', handleDurationChange);
-    audio.addEventListener('ended', handleEnded);
-
-    return () => {
-      audio.removeEventListener('timeupdate', handleTimeUpdate);
-      audio.removeEventListener('durationchange', handleDurationChange);
-      audio.removeEventListener('ended', handleEnded);
-      audio.pause();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  
   const playTrack = useCallback((track: Track, newPlaylist?: Track[]) => {
     const pl = newPlaylist || allTracks;
     const trackIndex = pl.findIndex(t => t.id === track.id);
@@ -70,18 +48,6 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   }, [allTracks]);
 
-  const togglePlayPause = useCallback(() => {
-    if (!currentTrack) return;
-    if (isPlaying) {
-      audioRef.current?.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current?.play().then(() => {
-        setIsPlaying(true);
-      }).catch(e => console.error("Error playing audio:", e));
-    }
-  }, [currentTrack, isPlaying]);
-
   const playNext = useCallback(() => {
     if (playlist.length === 0) return;
     const nextIndex = (currentIndex + 1) % playlist.length;
@@ -93,6 +59,48 @@ export const AudioProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const prevIndex = (currentIndex - 1 + playlist.length) % playlist.length;
     playTrack(playlist[prevIndex], playlist);
   }, [currentIndex, playlist, playTrack]);
+
+  // This effect keeps the playNextRef.current up to date with the latest callback
+  useEffect(() => {
+    playNextRef.current = playNext;
+  }, [playNext]);
+
+  // This effect sets up the audio element and its listeners on mount
+  useEffect(() => {
+    audioRef.current = new Audio();
+    audioRef.current.volume = volume;
+
+    const audio = audioRef.current;
+    
+    const handleTimeUpdate = () => setProgress(audio.currentTime);
+    const handleDurationChange = () => setDuration(audio.duration);
+    const handleEnded = () => playNextRef.current(); // Use the ref to avoid stale closure
+
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('durationchange', handleDurationChange);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('durationchange', handleDurationChange);
+      audio.removeEventListener('ended', handleEnded);
+      audio.pause();
+    };
+    // This effect should only run once on mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  
+  const togglePlayPause = useCallback(() => {
+    if (!currentTrack) return;
+    if (isPlaying) {
+      audioRef.current?.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current?.play().then(() => {
+        setIsPlaying(true);
+      }).catch(e => console.error("Error playing audio:", e));
+    }
+  }, [currentTrack, isPlaying]);
 
   const seek = (value: number) => {
     if (audioRef.current) {
